@@ -10,15 +10,24 @@ const apiHash = process.env.API_HASH;
 const sessionString = process.env.SESSION_STRING;
 const targetChannel = process.env.TARGET_CHANNEL;
 const phoneNumber = process.env.PHONE;
-// const filePath = process.env.RAILWAY_VOLUME_PATH || './sent.json';
 
 const filePath = process.env.RAILWAY_VOLUME_PATH
     ? path.join(process.env.RAILWAY_VOLUME_PATH, 'sent.json')
     : './sent.json';
 
 const daysBack = 2; // За сколько дней парсим
-const keywords = ['Главные события', 'Главные новости', 'Главное к исходу', 'выпуск новостей'];
-const sourceChannels = ['@if_market_news', '@newkal', '@kontext_channel', '@meduzalive', '@echoonline_news'];
+const keywords = ['Главные события', 'Главные новости', 'Главное к исходу', 'выпуск новостей', 'Итоги дня'];
+const sourceChannels = ['@if_market_news', '@newkal', '@kontext_channel', '@meduzalive', '@echoonline_news', '@rian_ru', '@omyinvestments'];
+
+const channelNames = {
+    '@if_market_news': 'IF News',
+    '@newkal': 'Новый Кал-д',
+    '@kontext_channel': 'Контекст',
+    '@meduzalive': 'Медуза',
+    '@echoonline_news': 'Эхо',
+    '@rian_ru': 'РИА Новости',
+    '@omyinvestments': 'Мои Инвестиции'
+}
 
 const now = Math.floor(Date.now() / 1000); // Текущая дата в Unix-формате
 const twoDaysAgo = now - (daysBack * 86400); // 86400 = секунд в сутках
@@ -70,6 +79,8 @@ async function main() {
                         continue;
                     }
 
+                    msg.channel = channel;
+
                     newMessages.push(msg);
                 }
             } catch (err) {
@@ -89,11 +100,11 @@ async function main() {
 
                 console.log('📢 Новое сообщение:', message.text.substring(0, 50) + '...');
 
-                const messageDate = new Date(message.date * 1000); // Telegram date в секундах
+                const messageDate = new Date((message.date + 60 * 60 * 2) * 1000); // Telegram date в секундах
                 const formattedDate = formatDate(messageDate);
 
                 // Добавляем дату перед текстом
-                const messageWithDate = `📅 **${formattedDate}**\n\n${message.text}`;
+                const messageWithDate = `📅 **${formattedDate} | ${channelNames[message.channel]}**\n\n${message.text}`;
 
                 await client.sendMessage(targetChannel, {
                     message: messageWithDate,
@@ -130,7 +141,7 @@ function input(prompt) {
 function formatDate(date) {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0'); // Месяцы 0-11
-    const year = date.getFullYear();
+    const year = String(date.getFullYear()).slice(-2);
     const hours = String(date.getHours()).padStart(2, "0");
     const minutes = String(date.getMinutes()).padStart(2, "0");
     return `${hours}:${minutes} ${day}.${month}.${year}`;
