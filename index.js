@@ -33,8 +33,8 @@ const client = new TelegramClient(session, apiId, apiHash, {
     connectionRetries: 5,
 });
 
-if (!fs.existsSync(SENT_PATH)) {
-    fs.writeFileSync(SENT_PATH, '[]', 'utf-8');
+if (!fs.existsSync(filePath)) {
+    fs.writeFileSync(filePath, '[]', 'utf-8');
 }
 
 const sentMessages = new Set(JSON.parse(fs.readFileSync(filePath, 'utf-8') || []));
