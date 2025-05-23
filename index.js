@@ -1,0 +1,135 @@
+require('dotenv').config();
+const { TelegramClient } = require('telegram');
+const { StringSession } = require('telegram/sessions');
+const fs = require('fs');
+
+// Конфигурация из .env
+const apiId = parseInt(process.env.API_ID);
+const apiHash = process.env.API_HASH;
+const sessionString = process.env.SESSION_STRING;
+const targetChannel = process.env.TARGET_CHANNEL;
+const phoneNumber = process.env.PHONE;
+const filePath = process.env.RAILWAY_VOLUME_PATH || './sent.json';
+
+const daysBack = 2; // За сколько дней парсим
+const keywords = ['Главные события', 'Главные новости', 'Главное к исходу', 'выпуск новостей'];
+const sourceChannels = ['@if_market_news', '@newkal', '@kontext_channel', '@meduzalive', '@echoonline_news'];
+
+const now = Math.floor(Date.now() / 1000); // Текущая дата в Unix-формате
+const twoDaysAgo = now - (daysBack * 86400); // 86400 = секунд в сутках
+
+
+
+// Сессия для авторизации
+const session = new StringSession(sessionString || '');
+
+// Инициализация клиента
+const client = new TelegramClient(session, apiId, apiHash, {
+    connectionRetries: 5,
+});
+
+const sentMessages = new Set(JSON.parse(fs.readFileSync(filePath, 'utf-8') || []));
+
+async function main() {
+    console.log('Подключение к Telegram...');
+
+    await client.start({
+        phoneNumber: phoneNumber,
+        phoneCode: async () => await input('Введите код из Telegram: '),
+        password: async () => await input('Введите пароль 2FA: '), // Запрашиваем, если включён 2FA
+        onError: (err) => console.error("Ошибка входа:", err),
+    });
+
+    console.log('✅ Успешная авторизация!');
+
+    // Сохраняем сессию для повторного использования
+    const newSession = client.session.save();
+    console.log('SESSION_STRING для .env:', newSession);
+
+        console.log('🔍 Проверяю новые сообщения...');
+
+        const newMessages = [];
+
+        for (const channel of sourceChannels) {
+            try {
+                const messages = await client.getMessages(channel, { limit: 100 });
+
+                for (const msg of messages) {
+                    if (!msg.text || msg.date < twoDaysAgo) continue;
+                    if (sentMessages.has(msg.id)) continue;
+                    if (!keywords.some((kw) => msg.text.includes(kw))) {
+                        continue;
+                    }
+
+                    newMessages.push(msg);
+                }
+            } catch (err) {
+                console.error(`❌ Ошибка в канале ${channel}:`, err.message);
+            }
+        }
+
+    if(!newMessages.length) {
+        console.log('✅ Новых новостей нет');
+        process.exit(0);
+    }
+
+    newMessages.sort((a, b) => a.date - b.date);
+
+        for (const message of newMessages) {
+            try{
+
+                console.log('📢 Новое сообщение:', message.text.substring(0, 50) + '...');
+
+                const messageDate = new Date(message.date * 1000); // Telegram date в секундах
+                const formattedDate = formatDate(messageDate);
+
+                // Добавляем дату перед текстом
+                const messageWithDate = `📅 **${formattedDate}**\n\n${message.text}`;
+
+                await client.sendMessage(targetChannel, {
+                    message: messageWithDate,
+                });
+
+                // Помечаем как отправленное
+                sentMessages.add(message.id);
+                console.log('✅ Отправлено в канал!');
+                await sleep(500); // Задержка, чтобы избежать флуд-бана
+
+            } catch (err){
+                console.error(`❌ Ошибка в ${message.text.substring(0, 50)}:`, err.message);
+            }
+        }
+    fs.writeFileSync(filePath, JSON.stringify([...sentMessages]));
+
+    process.exit(0);
+}
+
+// Вспомогательные функции
+function input(prompt) {
+    return new Promise((resolve) => {
+        const readline = require('readline').createInterface({
+            input: process.stdin,
+            output: process.stdout,
+        });
+        readline.question(prompt, (answer) => {
+            readline.close();
+            resolve(answer);
+        });
+    });
+}
+
+function formatDate(date) {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Месяцы 0-11
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `${hours}:${minutes} ${day}.${month}.${year}`;
+}
+
+function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Запуск
+main().catch(console.error);
