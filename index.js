@@ -21,7 +21,7 @@ const sourceChannels = ['@if_market_news', '@newkal', '@kontext_channel', '@medu
 
 const channelNames = {
     '@if_market_news': 'IF News',
-    '@newkal': 'Новый Кал-д',
+    '@newkal': 'Новый Калининград',
     '@kontext_channel': 'Контекст',
     '@meduzalive': 'Медуза',
     '@echoonline_news': 'Эхо',
