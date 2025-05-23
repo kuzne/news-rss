@@ -2,6 +2,7 @@ require('dotenv').config();
 const { TelegramClient } = require('telegram');
 const { StringSession } = require('telegram/sessions');
 const fs = require('fs');
+const path = require('path');
 
 // Конфигурация из .env
 const apiId = parseInt(process.env.API_ID);
@@ -9,7 +10,11 @@ const apiHash = process.env.API_HASH;
 const sessionString = process.env.SESSION_STRING;
 const targetChannel = process.env.TARGET_CHANNEL;
 const phoneNumber = process.env.PHONE;
-const filePath = process.env.RAILWAY_VOLUME_PATH || './sent.json';
+// const filePath = process.env.RAILWAY_VOLUME_PATH || './sent.json';
+
+const filePath = process.env.RAILWAY_VOLUME_PATH
+    ? path.join(process.env.RAILWAY_VOLUME_PATH, 'sent.json')
+    : './sent.json';
 
 const daysBack = 2; // За сколько дней парсим
 const keywords = ['Главные события', 'Главные новости', 'Главное к исходу', 'выпуск новостей'];
@@ -27,6 +32,10 @@ const session = new StringSession(sessionString || '');
 const client = new TelegramClient(session, apiId, apiHash, {
     connectionRetries: 5,
 });
+
+if (!fs.existsSync(SENT_PATH)) {
+    fs.writeFileSync(SENT_PATH, '[]', 'utf-8');
+}
 
 const sentMessages = new Set(JSON.parse(fs.readFileSync(filePath, 'utf-8') || []));
 
