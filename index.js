@@ -16,8 +16,8 @@ const filePath = process.env.RAILWAY_VOLUME_PATH
     : './sent.json';
 
 const daysBack = 2; // За сколько дней парсим
-const keywords = ['Главные события', 'Главные новости', 'Главное к исходу', 'выпуск новостей', 'Итоги дня'];
-const sourceChannels = ['@if_market_news', '@newkal', '@kontext_channel', '@meduzalive', '@echoonline_news', '@rian_ru', '@omyinvestments'];
+const keywords = ['Главные события', 'Главные новости', 'Главное к исходу', 'выпуск новостей', 'Итоги дня', 'Что случилось этой ночью', 'Что произошло за день'];
+const sourceChannels = ['@if_market_news', '@newkal', '@kontext_channel', '@meduzalive', '@echoonline_news', '@rian_ru', '@omyinvestments', '@interfaxonline', '@kommersant'];
 
 const channelNames = {
     '@if_market_news': 'IF News',
@@ -26,7 +26,9 @@ const channelNames = {
     '@meduzalive': 'Медуза',
     '@echoonline_news': 'Эхо',
     '@rian_ru': 'РИА Новости',
-    '@omyinvestments': 'Мои Инвестиции'
+    '@omyinvestments': 'Мои Инвестиции',
+    '@interfaxonline': 'Интерфакс',
+    '@kommersant': 'Коммерсантъ'
 }
 
 const now = Math.floor(Date.now() / 1000); // Текущая дата в Unix-формате
@@ -119,7 +121,8 @@ async function main() {
                 console.error(`❌ Ошибка в ${message.text.substring(0, 50)}:`, err.message);
             }
         }
-    fs.writeFileSync(filePath, JSON.stringify([...sentMessages]));
+    const trimmedMessages = trimSet(sentMessages, 150, 50);
+    fs.writeFileSync(filePath, JSON.stringify([...trimmedMessages]));
 
     process.exit(0);
 }
@@ -149,6 +152,14 @@ function formatDate(date) {
 
 function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function trimSet(set, maxSize = 150, removeCount = 50) {
+    if (set.size > maxSize) {
+        const itemsToRemove = Array.from(set).slice(0, removeCount);
+        itemsToRemove.forEach(item => set.delete(item));
+    }
+    return set;
 }
 
 // Запуск
