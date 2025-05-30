@@ -14,7 +14,7 @@ const STATE_FILE = process.env.RAILWAY_VOLUME_PATH
 // Парсинг новостей
 async function parseNews() {
     if (!isWithinTimeRange()) {
-        console.log('Спортивные новости проверяются только с 21:00 до 00:00. Текущее время:', new Date().toLocaleTimeString());
+        console.log('Спортивные новости в текущее время не проверяются. Текущее время на сервере:', new Date().toLocaleTimeString());
         return null;
     }
     try {
@@ -93,7 +93,7 @@ async function parseNews() {
 }
 
 function isWithinTimeRange() {
-    const parseHourse = [18, 19, 20, 10, 11, 12]
+    const parseHourse = [16, 17, 18, 8, 9, 10]
     const now = new Date();
     const hours = now.getHours();
     return parseHourse.includes(hours);
