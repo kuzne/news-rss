@@ -107,6 +107,9 @@ async function main() {
             message: sportNews,
             parseMode: 'html',
         });
+        console.log('✅ Спортивные новости отправлены');
+    } else {
+        console.log('✅ Новых спортивных новостей нет');
     }
 
     if(!newMessages.length) {
@@ -119,7 +122,7 @@ async function main() {
         for (const message of newMessages) {
             try{
 
-                console.log('📢 Новое сообщение:', message.text.substring(0, 50) + '...');
+                console.log('📢 Новое сообщение:', message.channel, message.text.substring(0, 30) + '...');
 
                 if (message.channel === '@divgen') {
                     await client.forwardMessages(targetChannel, { messages: [...message.albumMessages || message.id], fromPeer: message.channel });
@@ -137,11 +140,11 @@ async function main() {
 
                 // Помечаем как отправленное
                 sentMessages.add(message.id);
-                console.log('✅ Отправлено в канал!');
+                console.log('...отправлено в канал! ✅');
                 await sleep(500); // Задержка, чтобы избежать флуд-бана
 
             } catch (err){
-                console.error(`❌ Ошибка в ${message.text.substring(0, 50)}:`, err.message);
+                console.error(`❌ Ошибка в ${message.channel}: ${message.text.substring(0, 30)}:`, err.message);
             }
         }
     const trimmedMessages = trimSet(sentMessages, 150, 50);
