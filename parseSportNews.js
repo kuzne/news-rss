@@ -73,7 +73,7 @@ async function parseNews() {
         // 3. Форматирование в HTML
         let htmlOutput = `<b>rusfootball | Главные новости</b>\n\n`;
         newsItems.reverse().forEach(item => {
-            const pubTime = new Date(item.pubDate * 1000).toLocaleTimeString('ru-RU', {
+            const pubTime = new Date((item.pubDate + 60 * 60 * 2) * 1000).toLocaleTimeString('ru-RU', {
                 hour: '2-digit',
                 minute: '2-digit'
             });
