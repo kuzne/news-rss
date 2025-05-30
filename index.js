@@ -85,6 +85,12 @@ async function main() {
                         continue;
                     }
 
+                    if (channel === '@divgen' && msg.groupedId?.value) {
+                        const groupedId = msg.groupedId?.value;
+                        const albumMessages = messages.filter(m => m.groupedId?.value === groupedId).map(m => m.id);
+                        msg.albumMessages = albumMessages;
+                    }
+
                     msg.channel = channel;
 
                     newMessages.push(msg);
@@ -116,7 +122,7 @@ async function main() {
                 console.log('📢 Новое сообщение:', message.text.substring(0, 50) + '...');
 
                 if (message.channel === '@divgen') {
-                    await client.forwardMessages(targetChannel, { messages: [message.id], fromPeer: message.channel });
+                    await client.forwardMessages(targetChannel, { messages: [...message.albumMessages || message.id], fromPeer: message.channel });
                     continue;
                 }
 
