@@ -124,17 +124,17 @@ async function main() {
                 if (message.channel === '@divgen') {
                     await client.forwardMessages(targetChannel, { messages: [...message.albumMessages || message.id], fromPeer: message.channel });
                     continue;
+                } else {
+                    const messageDate = new Date((message.date + 60 * 60 * 2) * 1000); // Telegram date в секундах
+                    const formattedDate = formatDate(messageDate);
+
+                    // Добавляем дату перед текстом
+                    const messageWithDate = `📅 **${formattedDate} | ${channelNames[message.channel]}**\n\n${message.text}`;
+
+                    await client.sendMessage(targetChannel, {
+                        message: messageWithDate,
+                    });
                 }
-
-                const messageDate = new Date((message.date + 60 * 60 * 2) * 1000); // Telegram date в секундах
-                const formattedDate = formatDate(messageDate);
-
-                // Добавляем дату перед текстом
-                const messageWithDate = `📅 **${formattedDate} | ${channelNames[message.channel]}**\n\n${message.text}`;
-
-                await client.sendMessage(targetChannel, {
-                    message: messageWithDate,
-                });
 
                 // Помечаем как отправленное
                 sentMessages.add(message.id);
