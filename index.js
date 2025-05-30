@@ -3,6 +3,7 @@ const { TelegramClient } = require('telegram');
 const { StringSession } = require('telegram/sessions');
 const fs = require('fs');
 const path = require('path');
+const parseSportNews = require("./parseSportNews");
 
 // Конфигурация из .env
 const apiId = parseInt(process.env.API_ID);
@@ -16,8 +17,10 @@ const filePath = process.env.RAILWAY_VOLUME_PATH
     : './sent.json';
 
 const daysBack = 2; // За сколько дней парсим
-const keywords = ['Главные события', 'Главные новости', 'Главное к исходу', 'выпуск новостей', 'Итоги дня', 'Что случилось этой ночью', 'Что произошло за день'];
-const sourceChannels = ['@if_market_news', '@newkal', '@kontext_channel', '@meduzalive', '@echoonline_news', '@rian_ru', '@omyinvestments', '@interfaxonline', '@kommersant'];
+const keywords = ['Главные события', 'Главные новости', 'Главное к исходу', 'выпуск новостей', 'Итоги дня',
+'Что случилось этой ночью', 'Что произошло за день', 'Погода в Калининградской области', 'Изменения на карте за прошедшие сутки'];
+const sourceChannels = ['@if_market_news', '@newkal', '@kontext_channel', '@meduzalive', '@echoonline_news', '@rian_ru', '@omyinvestments',
+'@interfaxonline', '@kommersant', '@divgen'];
 
 const channelNames = {
     '@if_market_news': 'IF News',
@@ -28,7 +31,8 @@ const channelNames = {
     '@rian_ru': 'РИА Новости',
     '@omyinvestments': 'Мои Инвестиции',
     '@interfaxonline': 'Интерфакс',
-    '@kommersant': 'Коммерсантъ'
+    '@kommersant': 'Коммерсантъ',
+    '@divgen': 'DIVGEN Карта СВО',
 }
 
 const now = Math.floor(Date.now() / 1000); // Текущая дата в Unix-формате
@@ -90,6 +94,15 @@ async function main() {
             }
         }
 
+    const sportNews = await parseSportNews();
+
+    if (sportNews) {
+        await client.sendMessage(targetChannel, {
+            message: sportNews,
+            parseMode: 'html',
+        });
+    }
+
     if(!newMessages.length) {
         console.log('✅ Новых новостей нет');
         process.exit(0);
@@ -101,6 +114,11 @@ async function main() {
             try{
 
                 console.log('📢 Новое сообщение:', message.text.substring(0, 50) + '...');
+
+                if (message.channel === '@divgen') {
+                    await client.forwardMessages(targetChannel, { messages: [message.id], fromPeer: message.channel });
+                    continue;
+                }
 
                 const messageDate = new Date((message.date + 60 * 60 * 2) * 1000); // Telegram date в секундах
                 const formattedDate = formatDate(messageDate);
