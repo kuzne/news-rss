@@ -103,13 +103,15 @@ async function main() {
     const sportNews = await parseSportNews();
 
     if (sportNews) {
-        await client.sendMessage(targetChannel, {
-            message: sportNews,
-            parseMode: 'html',
-        });
-        console.log('✅ Спортивные новости отправлены');
-    } else {
-        console.log('✅ Новых спортивных новостей нет');
+        try {
+            await client.sendMessage(targetChannel, {
+                message: sportNews,
+                parseMode: 'html',
+            });
+            console.log('✅ Спортивные новости отправлены');
+        } catch (e) {
+            console.error(`Ошибка отправки спортивных новостей ${e}`);
+        }
     }
 
     if(!newMessages.length) {

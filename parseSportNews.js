@@ -66,7 +66,8 @@ async function parseNews() {
             }
         });
 
-        if(!newsItems.length) {
+        if (newsItems.length < 3) {
+            console.log('✅ Спортивных новостей меньше 3')
             return null;
         }
 
@@ -87,13 +88,13 @@ async function parseNews() {
         return htmlOutput;
 
     } catch (error) {
-        console.error('Ошибка парсинга:', error);
+        console.error('Ошибка парсинга спортивных новостей:', error);
         return null;
     }
 }
 
 function isWithinTimeRange() {
-    const parseHourse = [16, 17, 18, 8, 9, 10]
+    const parseHourse = [16, 17, 8, 9]
     const now = new Date();
     const hours = now.getHours();
     return parseHourse.includes(hours);
